@@ -23,6 +23,7 @@ const hasLocal = args.includes('--local') || args.includes('-l');
 const hasOpencode = args.includes('--opencode');
 const hasClaude = args.includes('--claude');
 const hasGemini = args.includes('--gemini');
+const hasMcp = args.includes('--mcp') || args.includes('--mcp-server');
 const hasBoth = args.includes('--both'); // Legacy flag, keeps working
 const hasAll = args.includes('--all');
 const hasUninstall = args.includes('--uninstall') || args.includes('-u');
@@ -30,19 +31,21 @@ const hasUninstall = args.includes('--uninstall') || args.includes('-u');
 // Runtime selection - can be set by flags or interactive prompt
 let selectedRuntimes = [];
 if (hasAll) {
-  selectedRuntimes = ['claude', 'opencode', 'gemini'];
+  selectedRuntimes = ['claude', 'opencode', 'gemini', 'mcp'];
 } else if (hasBoth) {
   selectedRuntimes = ['claude', 'opencode'];
 } else {
   if (hasOpencode) selectedRuntimes.push('opencode');
   if (hasClaude) selectedRuntimes.push('claude');
   if (hasGemini) selectedRuntimes.push('gemini');
+  if (hasMcp) selectedRuntimes.push('mcp');
 }
 
 // Helper to get directory name for a runtime (used for local/project installs)
 function getDirName(runtime) {
   if (runtime === 'opencode') return '.opencode';
   if (runtime === 'gemini') return '.gemini';
+  if (runtime === 'mcp') return '.gsd-mcp';
   return '.claude';
 }
 
@@ -56,17 +59,17 @@ function getOpencodeGlobalDir() {
   if (process.env.OPENCODE_CONFIG_DIR) {
     return expandTilde(process.env.OPENCODE_CONFIG_DIR);
   }
-  
+
   // 2. OPENCODE_CONFIG env var (use its directory)
   if (process.env.OPENCODE_CONFIG) {
     return path.dirname(expandTilde(process.env.OPENCODE_CONFIG));
   }
-  
+
   // 3. XDG_CONFIG_HOME/opencode
   if (process.env.XDG_CONFIG_HOME) {
     return path.join(expandTilde(process.env.XDG_CONFIG_HOME), 'opencode');
   }
-  
+
   // 4. Default: ~/.config/opencode (XDG default)
   return path.join(os.homedir(), '.config', 'opencode');
 }
@@ -84,7 +87,7 @@ function getGlobalDir(runtime, explicitDir = null) {
     }
     return getOpencodeGlobalDir();
   }
-  
+
   if (runtime === 'gemini') {
     // Gemini: --config-dir > GEMINI_CONFIG_DIR > ~/.gemini
     if (explicitDir) {
@@ -95,7 +98,7 @@ function getGlobalDir(runtime, explicitDir = null) {
     }
     return path.join(os.homedir(), '.gemini');
   }
-  
+
   // Claude Code: --config-dir > CLAUDE_CONFIG_DIR > ~/.claude
   if (explicitDir) {
     return expandTilde(explicitDir);
@@ -150,7 +153,49 @@ console.log(banner);
 
 // Show help if requested
 if (hasHelp) {
-  console.log(`  ${yellow}Usage:${reset} npx get-shit-done-cc [options]\n\n  ${yellow}Options:${reset}\n    ${cyan}-g, --global${reset}              Install globally (to config directory)\n    ${cyan}-l, --local${reset}               Install locally (to current directory)\n    ${cyan}--claude${reset}                  Install for Claude Code only\n    ${cyan}--opencode${reset}                Install for OpenCode only\n    ${cyan}--gemini${reset}                  Install for Gemini only\n    ${cyan}--all${reset}                     Install for all runtimes\n    ${cyan}-u, --uninstall${reset}           Uninstall GSD (remove all GSD files)\n    ${cyan}-c, --config-dir <path>${reset}   Specify custom config directory\n    ${cyan}-h, --help${reset}                Show this help message\n    ${cyan}--force-statusline${reset}        Replace existing statusline config\n\n  ${yellow}Examples:${reset}\n    ${dim}# Interactive install (prompts for runtime and location)${reset}\n    npx get-shit-done-cc\n\n    ${dim}# Install for Claude Code globally${reset}\n    npx get-shit-done-cc --claude --global\n\n    ${dim}# Install for Gemini globally${reset}\n    npx get-shit-done-cc --gemini --global\n\n    ${dim}# Install for all runtimes globally${reset}\n    npx get-shit-done-cc --all --global\n\n    ${dim}# Install to custom config directory${reset}\n    npx get-shit-done-cc --claude --global --config-dir ~/.claude-bc\n\n    ${dim}# Install to current project only${reset}\n    npx get-shit-done-cc --claude --local\n\n    ${dim}# Uninstall GSD from Claude Code globally${reset}\n    npx get-shit-done-cc --claude --global --uninstall\n\n  ${yellow}Notes:${reset}\n    The --config-dir option is useful when you have multiple configurations.\n    It takes priority over CLAUDE_CONFIG_DIR / GEMINI_CONFIG_DIR environment variables.\n`);
+  console.log(`  ${yellow}Usage:${reset} npx get-shit-done-cc [options]\n\n  ${yellow}Options:${reset}
+    ${cyan}-g, --global${reset}              Install globally (to config directory)
+    ${cyan}-l, --local${reset}               Install locally (to current directory)
+    ${cyan}--claude${reset}                  Install for Claude Code only
+    ${cyan}--opencode${reset}                Install for OpenCode only
+    ${cyan}--gemini${reset}                  Install for Gemini only
+    ${cyan}--mcp${reset}                     Install MCP server (generic - Claude Desktop, Cursor, Windsurf, etc.)
+    ${cyan}--all${reset}                     Install for all runtimes
+    ${cyan}-u, --uninstall${reset}           Uninstall GSD (remove all GSD files)
+    ${cyan}-c, --config-dir <path>${reset}   Specify custom config directory
+    ${cyan}-h, --help${reset}                Show this help message
+    ${cyan}--force-statusline${reset}        Replace existing statusline config
+\n  ${yellow}Examples:${reset}
+    ${dim}# Interactive install (prompts for runtime and location)${reset}
+    npx get-shit-done-cc
+\n    ${dim}# Install for Claude Code globally${reset}
+    npx get-shit-done-cc --claude --global
+\n    ${dim}# Install for MCP server (generic)${reset}
+    npx get-shit-done-cc --mcp --global
+\n    ${dim}# Install for Gemini globally${reset}
+    npx get-shit-done-cc --gemini --global
+\n    ${dim}# Install for all runtimes globally${reset}
+    npx get-shit-done-cc --all --global
+\n    ${dim}# Install to custom config directory${reset}
+    npx get-shit-done-cc --claude --global --config-dir ~/.claude-bc
+\n    ${dim}# Install to current project only${reset}
+    npx get-shit-done-cc --claude --local
+\n    ${dim}# Uninstall GSD from Claude Code globally${reset}
+    npx get-shit-done-cc --claude --global --uninstall
+\n  ${yellow}Notes:${reset}
+    The --config-dir option is useful when you have multiple configurations.
+    It takes priority over CLAUDE_CONFIG_DIR / GEMINI_CONFIG_DIR environment variables.
+
+    For MCP server, add this to your MCP client config:
+    {
+      "mcpServers": {
+        "gsd": {
+          "command": "npx",
+          "args": ["get-shit-done-cc@latest", "--mcp-server"]
+        }
+      }
+    }
+`);
   process.exit(0);
 }
 
@@ -560,7 +605,7 @@ function convertClaudeToGeminiToml(content) {
 
   const frontmatter = content.substring(3, endIndex).trim();
   const body = content.substring(endIndex + 3).trim();
-  
+
   // Extract description from frontmatter
   let description = '';
   const lines = frontmatter.split('\n');
@@ -577,9 +622,9 @@ function convertClaudeToGeminiToml(content) {
   if (description) {
     toml += `description = ${JSON.stringify(description)}\n`;
   }
-  
+
   toml += `prompt = ${JSON.stringify(body)}\n`;
-  
+
   return toml;
 }
 
@@ -587,7 +632,7 @@ function convertClaudeToGeminiToml(content) {
  * Copy commands to a flat structure for OpenCode
  * OpenCode expects: command/gsd-help.md (invoked as /gsd-help)
  * Source structure: commands/gsd/help.md
- * 
+ *
  * @param {string} srcDir - Source directory (e.g., commands/gsd/)
  * @param {string} destDir - Destination directory (e.g., command/)
  * @param {string} prefix - Prefix for filenames (e.g., 'gsd')
@@ -598,7 +643,7 @@ function copyFlattenedCommands(srcDir, destDir, prefix, pathPrefix, runtime) {
   if (!fs.existsSync(srcDir)) {
     return;
   }
-  
+
   // Remove old gsd-*.md files before copying new ones
   if (fs.existsSync(destDir)) {
     for (const file of fs.readdirSync(destDir)) {
@@ -609,12 +654,12 @@ function copyFlattenedCommands(srcDir, destDir, prefix, pathPrefix, runtime) {
   } else {
     fs.mkdirSync(destDir, { recursive: true });
   }
-  
+
   const entries = fs.readdirSync(srcDir, { withFileTypes: true });
-  
+
   for (const entry of entries) {
     const srcPath = path.join(srcDir, entry.name);
-    
+
     if (entry.isDirectory()) {
       // Recurse into subdirectories, adding to prefix
       // e.g., commands/gsd/debug/start.md -> command/gsd-debug-start.md
@@ -1065,7 +1110,7 @@ function configureOpencodePermissions() {
   const gsdPath = opencodeConfigDir === defaultConfigDir
     ? '~/.config/opencode/get-shit-done/*'
     : `${opencodeConfigDir.replace(/\\/g, '/')}/get-shit-done/*`;
-  
+
   let modified = false;
 
   // Configure read permission
@@ -1266,11 +1311,89 @@ function reportLocalPatches(configDir) {
   return meta.files || [];
 }
 
+/**
+ * Install MCP server
+ * This is different from Claude/OpenCode/Gemini - we just verify the server is built
+ * and provide configuration instructions
+ */
+function installMcp(isGlobal) {
+  const src = path.join(__dirname, '..');
+  const mcpServerPath = path.join(src, 'mcp-server', 'dist', 'index.js');
+
+  console.log(`  Installing for ${cyan}MCP Server${reset} (Generic MCP clients)\n`);
+
+  // Check if MCP server is built
+  if (!fs.existsSync(mcpServerPath)) {
+    console.error(`  ${yellow}✗${reset} MCP server not found at ${mcpServerPath}`);
+    console.error(`  ${yellow}Please run:${reset} npm run build:mcp`);
+    return { settingsPath: null, settings: {}, statuslineCommand: null, runtime: 'mcp' };
+  }
+
+  console.log(`  ${green}✓${reset} MCP server found`);
+  console.log(`  ${green}✓${reset} Location: ${mcpServerPath}`);
+  console.log(`  ${green}✓${reset} Version: ${pkg.version}`);
+
+  // Print configuration instructions
+  console.log(`
+  ${cyan}MCP Server Configuration:${reset}
+
+  Add this to your MCP client configuration:
+
+  ${dim}Claude Desktop (~/Library/Application Support/Claude/claude_desktop_config.json):${reset}
+  {
+    "mcpServers": {
+      "gsd": {
+        "command": "npx",
+        "args": ["get-shit-done-cc@latest", "--mcp-server"]
+      }
+    }
+  }
+
+  ${dim}Cursor (Settings > MCP):${reset}
+  {
+    "mcpServers": {
+      "gsd": {
+        "command": "npx",
+        "args": ["get-shit-done-cc@latest", "--mcp-server"]
+      }
+    }
+  }
+
+  ${dim}Windsurf/Cascade (Cascade > Settings > MCP):${reset}
+  {
+    "mcpServers": {
+      "gsd": {
+        "command": "npx",
+        "args": ["get-shit-done-cc@latest", "--mcp-server"]
+      }
+    }
+  }
+
+  ${dim}Or run locally:${reset}
+  {
+    "mcpServers": {
+      "gsd": {
+        "command": "node",
+        "args": ["${mcpServerPath.replace(/\\/g, '/')}"]
+      }
+    }
+  }
+`);
+
+  return { settingsPath: null, settings: {}, statuslineCommand: null, runtime: 'mcp' };
+}
+
 function install(isGlobal, runtime = 'claude') {
   const isOpencode = runtime === 'opencode';
   const isGemini = runtime === 'gemini';
+  const isMcp = runtime === 'mcp';
   const dirName = getDirName(runtime);
   const src = path.join(__dirname, '..');
+
+  // Handle MCP server installation separately
+  if (isMcp) {
+    return installMcp(isGlobal);
+  }
 
   // Get the target directory based on runtime and install type
   const targetDir = isGlobal
@@ -1309,7 +1432,7 @@ function install(isGlobal, runtime = 'claude') {
     // OpenCode: flat structure in command/ directory
     const commandDir = path.join(targetDir, 'command');
     fs.mkdirSync(commandDir, { recursive: true });
-    
+
     // Copy commands/gsd/*.md as command/gsd-*.md (flatten structure)
     const gsdSrc = path.join(src, 'commands', 'gsd');
     copyFlattenedCommands(gsdSrc, commandDir, 'gsd', pathPrefix, runtime);
@@ -1323,7 +1446,7 @@ function install(isGlobal, runtime = 'claude') {
     // Claude Code & Gemini: nested structure in commands/ directory
     const commandsDir = path.join(targetDir, 'commands');
     fs.mkdirSync(commandsDir, { recursive: true });
-    
+
     const gsdSrc = path.join(src, 'commands', 'gsd');
     const gsdDest = path.join(commandsDir, 'gsd');
     copyWithPathReplacement(gsdSrc, gsdDest, pathPrefix, runtime);
@@ -1493,6 +1616,22 @@ function install(isGlobal, runtime = 'claude') {
  */
 function finishInstall(settingsPath, settings, statuslineCommand, shouldInstallStatusline, runtime = 'claude') {
   const isOpencode = runtime === 'opencode';
+  const isMcp = runtime === 'mcp';
+
+  // Handle MCP separately - no settings/statusline needed
+  if (isMcp) {
+    console.log(`
+  ${green}Done!${reset} GSD MCP Server is ready.
+
+  ${cyan}Next steps:${reset}
+  1. Add the MCP server configuration to your client
+  2. Restart your MCP client
+  3. Use tools like gsd_new_project, gsd_plan_phase, etc.
+
+  ${cyan}Join the community:${reset} https://discord.gg/5JJgD5svVS
+`);
+    return;
+  }
 
   if (shouldInstallStatusline && !isOpencode) {
     settings.statusLine = {
@@ -1595,15 +1734,18 @@ function promptRuntime(callback) {
   console.log(`  ${yellow}Which runtime(s) would you like to install for?${reset}\n\n  ${cyan}1${reset}) Claude Code ${dim}(~/.claude)${reset}
   ${cyan}2${reset}) OpenCode    ${dim}(~/.config/opencode)${reset} - open source, free models
   ${cyan}3${reset}) Gemini      ${dim}(~/.gemini)${reset}
-  ${cyan}4${reset}) All
+  ${cyan}4${reset}) MCP Server  ${dim}(Generic MCP - Claude Desktop, Cursor, Windsurf, etc.)${reset}
+  ${cyan}5${reset}) All
 `);
 
   rl.question(`  Choice ${dim}[1]${reset}: `, (answer) => {
     answered = true;
     rl.close();
     const choice = answer.trim() || '1';
-    if (choice === '4') {
-      callback(['claude', 'opencode', 'gemini']);
+    if (choice === '5') {
+      callback(['claude', 'opencode', 'gemini', 'mcp']);
+    } else if (choice === '4') {
+      callback(['mcp']);
     } else if (choice === '3') {
       callback(['gemini']);
     } else if (choice === '2') {
@@ -1676,11 +1818,11 @@ function installAllRuntimes(runtimes, isGlobal, isInteractive) {
 
   // Logic: if both are present, ask once if interactive? Or ask for each?
   // Simpler: Ask once and apply to both if applicable.
-  
+
   if (claudeResult || geminiResult) {
     // Use whichever settings exist to check for existing statusline
     const primaryResult = claudeResult || geminiResult;
-    
+
     handleStatusline(primaryResult.settings, isInteractive, (shouldInstallStatusline) => {
       if (claudeResult) {
         finishInstall(claudeResult.settingsPath, claudeResult.settings, claudeResult.statuslineCommand, shouldInstallStatusline, 'claude');
@@ -1688,16 +1830,27 @@ function installAllRuntimes(runtimes, isGlobal, isInteractive) {
       if (geminiResult) {
          finishInstall(geminiResult.settingsPath, geminiResult.settings, geminiResult.statuslineCommand, shouldInstallStatusline, 'gemini');
       }
-      
+
       const opencodeResult = results.find(r => r.runtime === 'opencode');
       if (opencodeResult) {
         finishInstall(opencodeResult.settingsPath, opencodeResult.settings, opencodeResult.statuslineCommand, false, 'opencode');
       }
+
+      const mcpResult = results.find(r => r.runtime === 'mcp');
+      if (mcpResult) {
+        finishInstall(null, {}, null, false, 'mcp');
+      }
     });
   } else {
-    // Only OpenCode
-    const opencodeResult = results[0];
-    finishInstall(opencodeResult.settingsPath, opencodeResult.settings, opencodeResult.statuslineCommand, false, 'opencode');
+    // Only OpenCode or MCP
+    const opencodeResult = results.find(r => r.runtime === 'opencode');
+    const mcpResult = results.find(r => r.runtime === 'mcp');
+    if (opencodeResult) {
+      finishInstall(opencodeResult.settingsPath, opencodeResult.settings, opencodeResult.statuslineCommand, false, 'opencode');
+    }
+    if (mcpResult) {
+      finishInstall(null, {}, null, false, 'mcp');
+    }
   }
 }
 
@@ -1708,6 +1861,15 @@ if (hasGlobal && hasLocal) {
 } else if (explicitConfigDir && hasLocal) {
   console.error(`  ${yellow}Cannot use --config-dir with --local${reset}`);
   process.exit(1);
+} else if (hasMcp && args.includes('--mcp-server')) {
+  // Run MCP server directly
+  const mcpServerPath = path.join(__dirname, '..', 'mcp-server', 'dist', 'index.js');
+  if (fs.existsSync(mcpServerPath)) {
+    require(mcpServerPath);
+  } else {
+    console.error(`  ${yellow}MCP server not found. Run: npm run build:mcp${reset}`);
+    process.exit(1);
+  }
 } else if (hasUninstall) {
   if (!hasGlobal && !hasLocal) {
     console.error(`  ${yellow}--uninstall requires --global or --local${reset}`);

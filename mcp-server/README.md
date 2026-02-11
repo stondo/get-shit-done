@@ -1,0 +1,229 @@
+# GSD MCP Server
+
+Generic MCP (Model Context Protocol) server for GSD (Get Shit Done) - meta-prompting and spec-driven development.
+
+## Overview
+
+This MCP server exposes GSD workflows as MCP tools, making them usable from any compatible MCP client:
+
+- **Claude Desktop**
+- **Cursor**
+- **Windsurf/Cascade**
+- **Zed**
+- Other editors/IDEs with MCP support
+
+## Available Tools
+
+### Core Tools
+- `gsd_new_project` - Initialize a new GSD project
+- `gsd_plan_phase` - Plan a project phase
+- `gsd_execute_phase` - Execute a phase
+- `gsd_verify_work` - Verify completed work
+- `gsd_discuss_phase` - Discuss implementation details
+
+### Utility Tools
+- `gsd_progress` - Show project status
+- `gsd_quick` - Quick task execution
+- `gsd_map_codebase` - Analyze existing codebase
+
+### Milestone Tools
+- `gsd_new_milestone` - Start a new milestone
+- `gsd_complete_milestone` - Complete the current milestone
+
+## Resources
+
+The server also exposes GSD resources accessible via URI:
+
+- `gsd://templates/{name}` - Templates (PROJECT.md, REQUIREMENTS.md, etc.)
+- `gsd://workflows/{name}` - Workflow files
+- `gsd://references/{name}` - Reference documents
+- `gsd://agents/{name}` - Agent definitions
+
+## Installation
+
+### Via npm (recommended)
+
+```bash
+npx get-shit-done-cc@latest --mcp --global
+```
+
+This will install the MCP server and show configuration instructions for your MCP client.
+
+### Manual
+
+```bash
+cd mcp-server
+npm install
+npm run build
+```
+
+## Client Configuration
+
+### Claude Desktop
+
+Add to the file `~/Library/Application Support/Claude/claude_desktop_config.json`:
+
+```json
+{
+  "mcpServers": {
+    "gsd": {
+      "command": "npx",
+      "args": ["get-shit-done-cc@latest", "--mcp-server"]
+    }
+  }
+}
+```
+
+### Cursor
+
+In MCP settings (Settings > MCP):
+
+```json
+{
+  "mcpServers": {
+    "gsd": {
+      "command": "npx",
+      "args": ["get-shit-done-cc@latest", "--mcp-server"]
+    }
+  }
+}
+```
+
+### Windsurf/Cascade
+
+In Cascade > Settings > MCP:
+
+```json
+{
+  "mcpServers": {
+    "gsd": {
+      "command": "npx",
+      "args": ["get-shit-done-cc@latest", "--mcp-server"]
+    }
+  }
+}
+```
+
+### Local/Development
+
+To use the local server during development:
+
+```json
+{
+  "mcpServers": {
+    "gsd": {
+      "command": "node",
+      "args": ["/path/to/get-shit-done/mcp-server/dist/index.js"]
+    }
+  }
+}
+```
+
+## Usage
+
+Once configured, the MCP client will show available GSD tools. You can:
+
+1. **Start a new project**:
+   - Use the `gsd_new_project` tool
+   - Provide project name and description
+
+2. **Plan a phase**:
+   - Use `gsd_plan_phase` with the phase number
+   - The system will create executable plans
+
+3. **Execute a phase**:
+   - Use `gsd_execute_phase`
+   - The planned work will be executed
+
+4. **Verify the work**:
+   - Use `gsd_verify_work`
+   - Confirm everything works as expected
+
+## Differences from Claude Code/OpenCode/Gemini
+
+| Feature | Claude Code | OpenCode | Gemini | MCP |
+|---------|-------------|----------|--------|-----|
+| Interface | Slash commands | Flat commands | TOML files | Tools |
+| Storage | `~/.claude/` | `~/.config/opencode/` | `~/.gemini/` | N/A |
+| Config | `settings.json` | `opencode.json` | `settings.json` | MCP client config |
+| Transport | N/A | N/A | N/A | stdio |
+
+## Architecture
+
+```
+mcp-server/
+├── src/
+│   ├── index.ts          # Entry point server
+│   ├── server.ts         # MCP Server setup
+│   ├── tools/            # Tool implementations
+│   │   ├── index.ts      # Tool registration
+│   │   ├── core.ts       # Core GSD tools
+│   │   ├── navigation.ts # Navigation tools
+│   │   ├── brownfield.ts # Brownfield tools
+│   │   ├── milestone.ts  # Milestone tools
+│   │   ├── phase.ts      # Phase management
+│   │   ├── utility.ts    # Utility tools
+│   │   └── session.ts    # Session tools
+│   ├── resources/        # Resource providers
+│   │   ├── index.ts      # Resource registration
+│   │   └── provider.ts   # Resource provider
+│   ├── prompts/          # Prompt handlers
+│   │   └── index.ts      # Prompt registration
+│   └── utils/            # Utilities
+│       ├── tool-mapper.ts    # Tool name mapping
+│       └── path-resolver.ts  # Path resolution
+├── dist/                 # Compiled output
+├── package.json
+└── tsconfig.json
+```
+
+## Development
+
+### Build
+
+```bash
+npm run build
+```
+
+### Watch mode
+
+```bash
+npm run dev
+```
+
+### Inspect with MCP Inspector
+
+```bash
+npm run inspect
+```
+
+## Troubleshooting
+
+### Server not found
+
+If you see the error "MCP server not found":
+
+```bash
+npm run build:mcp
+```
+
+### Tools not visible
+
+1. Verify the server is configured correctly in the MCP client
+2. Restart the MCP client
+3. Check server logs in stderr
+
+### Connection failed
+
+- Verify Node.js >= 16.7.0 is installed
+- Check the server path is correct
+- Ensure no other processes are using the same stdio connection
+
+## License
+
+MIT License - see LICENSE in the main repository.
+
+## Community
+
+- Discord: https://discord.gg/5JJgD5svVS
+- GitHub: https://github.com/glittercowboy/get-shit-done

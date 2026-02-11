@@ -1,0 +1,33 @@
+{
+  "name": "gsd-mcp-server",
+  "version": "1.0.0",
+  "description": "MCP server for GSD (Get Shit Done) - meta-prompting and spec-driven development",
+  "type": "module",
+  "main": "dist/index.js",
+  "bin": {
+    "gsd-mcp-server": "dist/index.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "start": "node dist/index.js",
+    "inspect": "npx @modelcontextprotocol/inspector dist/index.js"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.0.0",
+    "zod": "^3.23.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "typescript": "^5.4.0"
+  },
+  "keywords": [
+    "mcp",
+    "gsd",
+    "ai",
+    "development",
+    "spec-driven"
+  ],
+  "author": "TÂCHES",
+  "license": "MIT"
+}
