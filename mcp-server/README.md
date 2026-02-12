@@ -15,21 +15,50 @@ This MCP server exposes GSD workflows as MCP tools, making them usable from any 
 
 ## Available Tools
 
-### Core Tools
+### Core Workflow Tools
 - `gsd_new_project` - Initialize a new GSD project
+- `gsd_discovery_phase` - Initial project discovery and analysis
 - `gsd_plan_phase` - Plan a project phase
+- `gsd_research_phase` - Research a phase before planning
 - `gsd_execute_phase` - Execute a phase
+- `gsd_execute_plan` - Execute a specific plan within a phase
 - `gsd_verify_work` - Verify completed work
+- `gsd_verify_phase` - Verify a phase before considering it complete
 - `gsd_discuss_phase` - Discuss implementation details
+
+### Phase Management Tools
+- `gsd_add_phase` - Add a new phase to the roadmap
+- `gsd_insert_phase` - Insert a decimal phase after an existing phase
+- `gsd_remove_phase` - Remove a phase and renumber subsequent phases
+- `gsd_list_phase_assumptions` - List assumptions for a specific phase
+
+### Todo Management Tools
+- `gsd_add_todo` - Add a new todo to the project
+- `gsd_check_todos` - Check status of todos across the project
+
+### Session Management Tools
+- `gsd_pause_work` - Pause current work session and save context
+- `gsd_resume_work` - Resume work on a paused project
+- `gsd_transition` - Transition between work sessions or contexts
+
+### Milestone Tools
+- `gsd_new_milestone` - Start a new milestone
+- `gsd_complete_milestone` - Complete the current milestone
+- `gsd_audit_milestone` - Audit milestone completeness and readiness
+- `gsd_plan_milestone_gaps` - Identify gaps in the current milestone plan
+
+### Diagnostic & Configuration Tools
+- `gsd_diagnose_issues` - Diagnose project issues and inconsistencies
+- `gsd_set_profile` - Set the model profile (quality/balanced/budget)
+- `gsd_settings` - Configure GSD settings
+- `gsd_health` - Check GSD installation and project health
 
 ### Utility Tools
 - `gsd_progress` - Show project status
 - `gsd_quick` - Quick task execution
 - `gsd_map_codebase` - Analyze existing codebase
-
-### Milestone Tools
-- `gsd_new_milestone` - Start a new milestone
-- `gsd_complete_milestone` - Complete the current milestone
+- `gsd_read_state` - Read project STATE.md file
+- `gsd_run_cli` - Run any gsd-tools.js command directly
 
 ## Resources
 

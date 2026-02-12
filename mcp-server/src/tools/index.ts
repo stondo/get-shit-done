@@ -169,6 +169,98 @@ const RunCliSchema = z.object({
 const HealthSchema = z.object({
   cwd: z.string().optional().describe("Project directory to check (absolute path). If not provided, uses current working directory"),
 });
+
+const AddPhaseSchema = z.object({
+  description: z.string().describe("Phase description"),
+  cwd: z.string().optional().describe("Project directory (absolute path)"),
+});
+
+const InsertPhaseSchema = z.object({
+  after: z.number().describe("Phase number to insert after"),
+  description: z.string().describe("New phase description"),
+  cwd: z.string().optional().describe("Project directory (absolute path)"),
+});
+
+const RemovePhaseSchema = z.object({
+  phase: z.number().describe("Phase number to remove"),
+  force: z.boolean().optional().describe("Force removal without confirmation"),
+  cwd: z.string().optional().describe("Project directory (absolute path)"),
+});
+
+const ResearchPhaseSchema = z.object({
+  phase: z.number().describe("Phase number to research"),
+  cwd: z.string().optional().describe("Project directory (absolute path)"),
+});
+
+const AddTodoSchema = z.object({
+  description: z.string().describe("Todo description"),
+  area: z.string().optional().describe("Todo area/category"),
+  cwd: z.string().optional().describe("Project directory (absolute path)"),
+});
+
+const CheckTodosSchema = z.object({
+  area: z.string().optional().describe("Filter by area/category"),
+  cwd: z.string().optional().describe("Project directory (absolute path)"),
+});
+
+const ResumeWorkSchema = z.object({
+  cwd: z.string().optional().describe("Project directory (absolute path)"),
+});
+
+const PauseWorkSchema = z.object({
+  notes: z.string().optional().describe("Notes about where work was paused"),
+  cwd: z.string().optional().describe("Project directory (absolute path)"),
+});
+
+const AuditMilestoneSchema = z.object({
+  cwd: z.string().optional().describe("Project directory (absolute path)"),
+});
+
+const VerifyPhaseSchema = z.object({
+  phase: z.number().describe("Phase number to verify"),
+  cwd: z.string().optional().describe("Project directory (absolute path)"),
+});
+
+const ExecutePlanSchema = z.object({
+  phase: z.number().describe("Phase number"),
+  plan: z.number().describe("Plan number to execute"),
+  cwd: z.string().optional().describe("Project directory (absolute path)"),
+});
+
+const DiagnoseIssuesSchema = z.object({
+  cwd: z.string().optional().describe("Project directory (absolute path)"),
+});
+
+const SetProfileSchema = z.object({
+  profile: z.enum(["quality", "balanced", "budget"]).describe("Model profile to use"),
+  cwd: z.string().optional().describe("Project directory (absolute path)"),
+});
+
+const SettingsSchema = z.object({
+  key: z.string().optional().describe("Setting key to get/set"),
+  value: z.string().optional().describe("Setting value (if setting a key)"),
+  list: z.boolean().optional().describe("List all settings"),
+  cwd: z.string().optional().describe("Project directory (absolute path)"),
+});
+
+const ListPhaseAssumptionsSchema = z.object({
+  phase: z.number().describe("Phase number to list assumptions for"),
+  cwd: z.string().optional().describe("Project directory (absolute path)"),
+});
+
+const PlanMilestoneGapsSchema = z.object({
+  cwd: z.string().optional().describe("Project directory (absolute path)"),
+});
+
+const DiscoveryPhaseSchema = z.object({
+  cwd: z.string().optional().describe("Project directory (absolute path)"),
+});
+
+const TransitionSchema = z.object({
+  from: z.string().optional().describe("What you're transitioning from"),
+  to: z.string().optional().describe("What you're transitioning to"),
+  cwd: z.string().optional().describe("Project directory (absolute path)"),
+});
 // Tool implementations
 const tools: GsdTool[] = [
   createTool(
@@ -476,6 +568,312 @@ const tools: GsdTool[] = [
           {
             type: "text",
             text: `## GSD Health Check\n\n### Passed (${checks.length})\n${checks.map(c => `- ${c}`).join("\n")}\n\n### Issues (${errors.length})\n${errors.map(e => `- ${e}`).join("\n") || "None!"}\n\n---\n\n**Recommendation:** ${errors.length === 0 ? "Project looks healthy! Ready to work." : `Run \`gsd_new_project\` to initialize or check the project path.`}`,
+          },
+        ],
+      };
+    }
+  ),
+
+  createTool(
+    "gsd_add_phase",
+    "Add a new phase to the project roadmap",
+    AddPhaseSchema,
+    async (args) => {
+      const workflow = await loadWorkflow("add-phase");
+      return {
+        content: [
+          {
+            type: "text",
+            text: `## Adding New Phase\n\n**Description:** ${args.description}\n\n### Workflow Instructions\n\n${workflow}\n\n---\n\n### Execution Context\n- Description: ${args.description}\n- Project: ${args.cwd || process.cwd()}`,
+          },
+        ],
+      };
+    }
+  ),
+
+  createTool(
+    "gsd_insert_phase",
+    "Insert a new decimal phase after an existing phase",
+    InsertPhaseSchema,
+    async (args) => {
+      const workflow = await loadWorkflow("insert-phase");
+      return {
+        content: [
+          {
+            type: "text",
+            text: `## Inserting Phase After ${args.after}\n\n**Description:** ${args.description}\n\n### Workflow Instructions\n\n${workflow}\n\n---\n\n### Execution Context\n- Insert After: Phase ${args.after}\n- Description: ${args.description}\n- Project: ${args.cwd || process.cwd()}`,
+          },
+        ],
+      };
+    }
+  ),
+
+  createTool(
+    "gsd_remove_phase",
+    "Remove a phase from the roadmap and renumber subsequent phases",
+    RemovePhaseSchema,
+    async (args) => {
+      const workflow = await loadWorkflow("remove-phase");
+      return {
+        content: [
+          {
+            type: "text",
+            text: `## Removing Phase ${args.phase}\n\n${args.force ? "⚠️ **FORCE MODE ENABLED** - Will skip confirmations\n\n" : ""}### Workflow Instructions\n\n${workflow}\n\n---\n\n### Execution Context\n- Phase to Remove: ${args.phase}\n- Force: ${args.force || false}\n- Project: ${args.cwd || process.cwd()}`,
+          },
+        ],
+      };
+    }
+  ),
+
+  createTool(
+    "gsd_research_phase",
+    "Research a phase before planning to gather context and requirements",
+    ResearchPhaseSchema,
+    async (args) => {
+      const workflow = await loadWorkflow("research-phase");
+      return {
+        content: [
+          {
+            type: "text",
+            text: `## Researching Phase ${args.phase}\n\n### Workflow Instructions\n\n${workflow}\n\n---\n\n### Execution Context\n- Phase: ${args.phase}\n- Project: ${args.cwd || process.cwd()}`,
+          },
+        ],
+      };
+    }
+  ),
+
+  createTool(
+    "gsd_add_todo",
+    "Add a new todo to the project",
+    AddTodoSchema,
+    async (args) => {
+      const workflow = await loadWorkflow("add-todo");
+      return {
+        content: [
+          {
+            type: "text",
+            text: `## Adding Todo\n\n**Description:** ${args.description}\n${args.area ? `**Area:** ${args.area}\n` : ""}\n### Workflow Instructions\n\n${workflow}\n\n---\n\n### Execution Context\n- Description: ${args.description}\n${args.area ? `- Area: ${args.area}\n` : ""}- Project: ${args.cwd || process.cwd()}`,
+          },
+        ],
+      };
+    }
+  ),
+
+  createTool(
+    "gsd_check_todos",
+    "Check status of todos across the project",
+    CheckTodosSchema,
+    async (args) => {
+      const workflow = await loadWorkflow("check-todos");
+      return {
+        content: [
+          {
+            type: "text",
+            text: `## Checking Todos${args.area ? ` (Area: ${args.area})` : ""}\n\n### Workflow Instructions\n\n${workflow}\n\n---\n\n### Execution Context\n${args.area ? `- Area Filter: ${args.area}\n` : ""}- Project: ${args.cwd || process.cwd()}`,
+          },
+        ],
+      };
+    }
+  ),
+
+  createTool(
+    "gsd_resume_work",
+    "Resume work on a paused project",
+    ResumeWorkSchema,
+    async (args) => {
+      const workflow = await loadWorkflow("resume-project");
+      return {
+        content: [
+          {
+            type: "text",
+            text: `## Resuming Work\n\n### Workflow Instructions\n\n${workflow}\n\n---\n\n### Execution Context\n- Project: ${args.cwd || process.cwd()}`,
+          },
+        ],
+      };
+    }
+  ),
+
+  createTool(
+    "gsd_pause_work",
+    "Pause current work session and save context",
+    PauseWorkSchema,
+    async (args) => {
+      const workflow = await loadWorkflow("pause-work");
+      return {
+        content: [
+          {
+            type: "text",
+            text: `## Pausing Work\n\n${args.notes ? `**Notes:** ${args.notes}\n\n` : ""}### Workflow Instructions\n\n${workflow}\n\n---\n\n### Execution Context\n${args.notes ? `- Notes: ${args.notes}\n` : ""}- Project: ${args.cwd || process.cwd()}`,
+          },
+        ],
+      };
+    }
+  ),
+
+  createTool(
+    "gsd_audit_milestone",
+    "Audit milestone completeness and readiness",
+    AuditMilestoneSchema,
+    async (args) => {
+      const workflow = await loadWorkflow("audit-milestone");
+      return {
+        content: [
+          {
+            type: "text",
+            text: `## Auditing Milestone\n\n### Workflow Instructions\n\n${workflow}\n\n---\n\n### Execution Context\n- Project: ${args.cwd || process.cwd()}`,
+          },
+        ],
+      };
+    }
+  ),
+
+  createTool(
+    "gsd_verify_phase",
+    "Verify a phase before considering it complete",
+    VerifyPhaseSchema,
+    async (args) => {
+      const workflow = await loadWorkflow("verify-phase");
+      return {
+        content: [
+          {
+            type: "text",
+            text: `## Verifying Phase ${args.phase}\n\n### Workflow Instructions\n\n${workflow}\n\n---\n\n### Execution Context\n- Phase: ${args.phase}\n- Project: ${args.cwd || process.cwd()}`,
+          },
+        ],
+      };
+    }
+  ),
+
+  createTool(
+    "gsd_execute_plan",
+    "Execute a specific plan within a phase",
+    ExecutePlanSchema,
+    async (args) => {
+      const workflow = await loadWorkflow("execute-plan");
+      return {
+        content: [
+          {
+            type: "text",
+            text: `## Executing Plan ${args.plan} in Phase ${args.phase}\n\n### Workflow Instructions\n\n${workflow}\n\n---\n\n### Execution Context\n- Phase: ${args.phase}\n- Plan: ${args.plan}\n- Project: ${args.cwd || process.cwd()}`,
+          },
+        ],
+      };
+    }
+  ),
+
+  createTool(
+    "gsd_diagnose_issues",
+    "Diagnose project issues and inconsistencies",
+    DiagnoseIssuesSchema,
+    async (args) => {
+      const workflow = await loadWorkflow("diagnose-issues");
+      return {
+        content: [
+          {
+            type: "text",
+            text: `## Diagnosing Project Issues\n\n### Workflow Instructions\n\n${workflow}\n\n---\n\n### Execution Context\n- Project: ${args.cwd || process.cwd()}`,
+          },
+        ],
+      };
+    }
+  ),
+
+  createTool(
+    "gsd_set_profile",
+    "Set the model profile (quality/balanced/budget)",
+    SetProfileSchema,
+    async (args) => {
+      const workflow = await loadWorkflow("set-profile");
+      return {
+        content: [
+          {
+            type: "text",
+            text: `## Setting Model Profile\n\n**Profile:** ${args.profile}\n\n### Workflow Instructions\n\n${workflow}\n\n---\n\n### Execution Context\n- Profile: ${args.profile}\n- Project: ${args.cwd || process.cwd()}`,
+          },
+        ],
+      };
+    }
+  ),
+
+  createTool(
+    "gsd_settings",
+    "Configure GSD settings",
+    SettingsSchema,
+    async (args) => {
+      const workflow = await loadWorkflow("settings");
+      return {
+        content: [
+          {
+            type: "text",
+            text: `## GSD Settings\n\n${args.list ? "**Listing all settings**\n\n" : ""}${args.key ? `**Key:** ${args.key}\n` : ""}${args.value ? `**Value:** ${args.value}\n` : ""}\n### Workflow Instructions\n\n${workflow}\n\n---\n\n### Execution Context\n${args.key ? `- Key: ${args.key}\n` : ""}${args.value ? `- Value: ${args.value}\n` : ""}${args.list ? "- Action: List all settings\n" : ""}- Project: ${args.cwd || process.cwd()}`,
+          },
+        ],
+      };
+    }
+  ),
+
+  createTool(
+    "gsd_list_phase_assumptions",
+    "List assumptions for a specific phase",
+    ListPhaseAssumptionsSchema,
+    async (args) => {
+      const workflow = await loadWorkflow("list-phase-assumptions");
+      return {
+        content: [
+          {
+            type: "text",
+            text: `## Listing Assumptions for Phase ${args.phase}\n\n### Workflow Instructions\n\n${workflow}\n\n---\n\n### Execution Context\n- Phase: ${args.phase}\n- Project: ${args.cwd || process.cwd()}`,
+          },
+        ],
+      };
+    }
+  ),
+
+  createTool(
+    "gsd_plan_milestone_gaps",
+    "Identify gaps in the current milestone plan",
+    PlanMilestoneGapsSchema,
+    async (args) => {
+      const workflow = await loadWorkflow("plan-milestone-gaps");
+      return {
+        content: [
+          {
+            type: "text",
+            text: `## Planning Milestone Gaps\n\n### Workflow Instructions\n\n${workflow}\n\n---\n\n### Execution Context\n- Project: ${args.cwd || process.cwd()}`,
+          },
+        ],
+      };
+    }
+  ),
+
+  createTool(
+    "gsd_discovery_phase",
+    "Initial project discovery and analysis",
+    DiscoveryPhaseSchema,
+    async (args) => {
+      const workflow = await loadWorkflow("discovery-phase");
+      return {
+        content: [
+          {
+            type: "text",
+            text: `## Project Discovery Phase\n\n### Workflow Instructions\n\n${workflow}\n\n---\n\n### Execution Context\n- Project: ${args.cwd || process.cwd()}`,
+          },
+        ],
+      };
+    }
+  ),
+
+  createTool(
+    "gsd_transition",
+    "Transition between work sessions or contexts",
+    TransitionSchema,
+    async (args) => {
+      const workflow = await loadWorkflow("transition");
+      return {
+        content: [
+          {
+            type: "text",
+            text: `## Transitioning Work\n\n${args.from ? `**From:** ${args.from}\n` : ""}${args.to ? `**To:** ${args.to}\n` : ""}\n### Workflow Instructions\n\n${workflow}\n\n---\n\n### Execution Context\n${args.from ? `- From: ${args.from}\n` : ""}${args.to ? `- To: ${args.to}\n` : ""}- Project: ${args.cwd || process.cwd()}`,
           },
         ],
       };
