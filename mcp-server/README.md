@@ -6,6 +6,7 @@ Generic MCP (Model Context Protocol) server for GSD (Get Shit Done) - meta-promp
 
 This MCP server exposes GSD workflows as MCP tools, making them usable from any compatible MCP client:
 
+- **VS Code (GitHub Copilot)**
 - **Claude Desktop**
 - **Cursor**
 - **Windsurf/Cascade**
@@ -88,6 +89,24 @@ In MCP settings (Settings > MCP):
   }
 }
 ```
+
+### VS Code (GitHub Copilot)
+
+Create `.vscode/mcp.json` in your workspace (or add to user settings via `MCP: Open User Configuration`):
+
+```json
+{
+  "servers": {
+    "gsd": {
+      "type": "stdio",
+      "command": "npx",
+      "args": ["get-shit-done-cc@latest", "--mcp-server"]
+    }
+  }
+}
+```
+
+Once added, GSD tools appear in the Copilot Chat tool picker. Resources are available via **Add Context > MCP Resources**, and prompts are accessible as `/mcp.gsd.<promptname>` slash commands.
 
 ### Windsurf/Cascade
 
